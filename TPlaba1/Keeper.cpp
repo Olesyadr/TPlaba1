@@ -2,6 +2,8 @@
 #include "Poet.h"
 #include "Novelist.h"
 #include "Fantastic.h"
+#include "Printing.h"
+#include "Exeption.h"
 #include <fstream>
 #include <iostream>
 
@@ -23,19 +25,45 @@ Keeper::~Keeper()
     std::cout << "Keeper default destructor called\n";
 }
 
-void Keeper::add(Printing* instrument)
+void Keeper::add(Printing* book)
 {
     Printing** newBooks = new Printing * [numBooks + 1];
     for (int i = 0; i < numBooks; i++)
     {
         newBooks[i] = books[i];
     }
-    newBooks[numBooks] = instrument;
+    newBooks[numBooks] = book;
     numBooks++;
-    delete[] books;
+    delete[] book;
     books = newBooks;
 }
+void Keeper::remove(int index)
+{
+    if (index >= numBooks || index < 0)
+        throw Exception("There is no such object!\n");
+    Printing** newBooks = new Printing * [numBooks - 1];
+    int j = 0;
+    for (int i = 0; i < numBooks; i++)
+    {
+        if (i != index)
+        {
+            newBooks[j++] = books[i];
+        }
+    }
+    delete[] books;
+    books = newBooks;
+    numBooks--;
+}
 
+void Keeper::print()
+{
+    if (numBooks == 0)
+        throw Exception("There are no objects!\n");
+    for (int i = 0; i < numBooks; i++)
+    {
+        books[i]->print();
+    }
+}
 void Keeper::save(std::string filename)
 {
     std::ofstream file(filename);

@@ -5,7 +5,7 @@
 #include<string>
 class Keeper {
 private:
-    Ptinting** books;
+    Printing** books;
     int numBooks;
 public:
     Keeper();
