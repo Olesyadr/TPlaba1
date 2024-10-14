@@ -6,6 +6,8 @@
 #include "Exeption.h"
 #include <fstream>
 #include <iostream>
+#include <typeinfo>   
+#include <stdexcept>
 
 Keeper::Keeper()
 {
@@ -18,10 +20,9 @@ Keeper::~Keeper()
 {
     for (int i = 0; i < numBooks; i++)
     {
-        delete books[i];
+        delete books[i]; 
     }
-    delete[] books;
-
+    delete[] books; 
     std::cout << "Keeper default destructor called\n";
 }
 
@@ -32,26 +33,29 @@ void Keeper::add(Printing* book)
     {
         newBooks[i] = books[i];
     }
-    newBooks[numBooks] = book;
+    newBooks[numBooks] = book; 
     numBooks++;
-    delete[] book;
-    books = newBooks;
+    delete[] books; 
+    books = newBooks; 
 }
+
 void Keeper::remove(int index)
 {
     if (index >= numBooks || index < 0)
         throw Exception("There is no such object!\n");
+
     Printing** newBooks = new Printing * [numBooks - 1];
     int j = 0;
     for (int i = 0; i < numBooks; i++)
     {
         if (i != index)
         {
-            newBooks[j++] = books[i];
+            newBooks[j++] = books[i]; 
         }
     }
-    delete[] books;
-    books = newBooks;
+    delete books[index]; 
+    delete[] books; 
+    books = newBooks; 
     numBooks--;
 }
 
@@ -64,46 +68,51 @@ void Keeper::print()
         books[i]->print();
     }
 }
-void Keeper::save(std::string filename)
-{
-    std::ofstream file(filename);
-    file << numBooks << std::endl;
-    for (int i = 0; i < numBooks; i++) {
-        file << books[i]->getParam() << "\n";
 
+void Keeper::saveToFile(const std::string& filename) {
+    std::ofstream ofs(filename, std::ios::binary);
+    if (!ofs) {
+        throw Exception("Cannot open file for writing!\n");
     }
-    file.close();
+    ofs.write(reinterpret_cast<char*>(&numBooks), sizeof(numBooks)); 
+    for (int i = 0; i < numBooks; i++) {
+        std::string type = typeid(*books[i]).name(); 
+        size_t typeSize = type.size();
+        ofs.write(reinterpret_cast<char*>(&typeSize), sizeof(typeSize)); 
+        ofs.write(type.c_str(), typeSize); 
+        books[i]->serialize(ofs); 
+    }
+    ofs.close();
 }
 
-void Keeper::load(std::string filename)
-{
-    std::ifstream file(filename);
-    std::string s;
-    while (getline(file, s))
-    {
-        std::string book, parameters;
-        book = s.substr(0, s.find(' '));
-        s.erase(0, s.find(' ') + 1);
-        parameters = s;
-        std::cout << parameters << std::endl;
-        if (book == "Poet")
-        {
-            Poet* ptr;
-            ptr = new Poet(parameters);
-            this->add(ptr);
-        }
-        if (book == "Novelist")
-        {
-            Novelist* nov;
-            nov = new Novelist(parameters);
-            this->add(nov);
-        }
-        if (book == "Fantastic")
-        {
-            Fantastic* fnt;
-            fnt = new Fantastic(parameters);
-            this->add(fnt);
-        }
+void Keeper::loadFromFile(const std::string& filename) {
+    std::ifstream ifs(filename, std::ios::binary);
+    if (!ifs) {
+        throw Exception("Cannot open file for reading!\n");
     }
-    file.close();
+    ifs.read(reinterpret_cast<char*>(&numBooks), sizeof(numBooks)); 
+    books = new Printing * [numBooks]; 
+    for (int i = 0; i < numBooks; i++) {
+        size_t typeSize;
+        ifs.read(reinterpret_cast<char*>(&typeSize), sizeof(typeSize)); 
+        std::string type(typeSize, ' '); 
+        ifs.read(&type[0], typeSize); 
+
+        Printing* book = nullptr;
+        if (type == typeid(Poet).name()) {
+            book = new Poet();
+        }
+        else if (type == typeid(Novelist).name()) {
+            book = new Novelist();
+        }
+        else if (type == typeid(Fantastic).name()) {
+            book = new Fantastic();
+        }
+        else {
+            throw Exception("Unknown book type!\n");
+        }
+        book->deserialize(ifs); 
+        books[i] = book; 
+    }
+    ifs.close();
 }

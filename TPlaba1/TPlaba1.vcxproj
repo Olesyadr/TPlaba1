@@ -128,12 +128,17 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Exeption.h" />
+    <ClInclude Include="Fantastic.h" />
     <ClInclude Include="Keeper.h" />
+    <ClInclude Include="Novelist.h" />
     <ClInclude Include="Poet.h" />
     <ClInclude Include="Printing.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Fantastic.cpp" />
     <ClCompile Include="Keeper.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="Novelist.cpp" />
     <ClCompile Include="Poet.cpp" />
     <ClCompile Include="Printing.cpp" />
   </ItemGroup>
